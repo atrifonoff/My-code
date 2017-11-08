@@ -27,7 +27,7 @@ class workpreff_WorkPreff extends core_Manager
     function description()
     {
         $this->FLD('name', 'varchar(255,ci)', 'caption=Предпочитания->Възможности,class=contactData,mandatory,remember=info,silent,export=Csv');
-        $this->FLD('type', 'enum(checkbox=Фиксиране, radio=Избор)', 'notNull,caption=Тип на избора,maxRadio=2,after=name');
+        $this->FLD('type', 'enum(set=Фиксиране, enum=Избор)', 'notNull,caption=Тип на избора,maxRadio=2,after=name');
         $this->FLD('choice', 'text', 'caption=Информация->Предложения за избор,class=contactData,mandatory,remember=info,silent,removeAndRefreshForm, export=Csv');
 
 
@@ -36,21 +36,48 @@ class workpreff_WorkPreff extends core_Manager
     }
 
 
-    public function getOptionsForm($arg)
+    /**
+     * Връща масив с опции за възможен избор
+     * @return array
+     */
+    public static function getOptionsForChoice()
     {
        $query = self::getQuery();
 
-        $recs = array();
-        while ($rec = $query->Fetch()){
+        while ($rec = $query->fetch()){
 
-            $id = $rec->id;
-            $recs[$id] = $rec;
-        };
+            $partsTemp = '';
 
-        $us = $recs[$arg];
+            $parts = explode("\n", $rec->choice);
+            $count = count($parts);
 
-        return $us;
+            foreach ($parts as $part) {
+
+               $partsTemp .= "$part".',';
+
+            }
+
+            $workPreffOptions[$rec->id] = (object)array(
+
+                'id' => $rec->id,
+                'type' => $rec->type,
+                'parts' => trim($partsTemp,','),
+                'name' => $rec->name,
+                'count' => $count,
+
+            );
+
+        }
+
+
+        if (!$workPreffOptions){
+
+            $workPreffOptions = array();
+
+            return $workPreffOptions;
+
+        }else{return $workPreffOptions;}
+
     }
-
 
 }

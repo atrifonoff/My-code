@@ -1,16 +1,15 @@
 <?php
 
 /**
- * class acc_Setup
+ * Клас ' workpreff_Setup'
  *
  * Инсталиране/Деинсталиране на
- * мениджъри свързани със счетоводството
- *
+ * мениджъри свързани със подбора на персонал
  *
  * @category  bgerp
- * @package   opit
- * @author    Milen Georgiev <milen@download.bg>
- * @copyright 2006 - 2012 Experta OOD
+ * @package   workpreff
+ * @author    Angel Trifonov angel.trifonoff@gmail.com
+ * @copyright 2006 - 2017 Experta OOD
  * @license   GPL 3
  * @since     v 0.1
  */

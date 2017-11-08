@@ -88,7 +88,7 @@ class hr_FormCv extends core_Master
     /**
      * Плъгини и MVC класове, които се зареждат при инициализация
      */
-    var $loadList = 'doc_DocumentPlg, plg_RowTools2, hr_Wrapper, plg_Printing, plg_State, plg_PrevAndNext,doc_ActivatePlg';
+    var $loadList = 'doc_DocumentPlg, plg_RowTools2,hr_Wrapper, plg_Printing, plg_State, plg_PrevAndNext,doc_ActivatePlg';
 
 
     /**
@@ -116,7 +116,8 @@ class hr_FormCv extends core_Master
         $this->FLD('photo', 'fileman_FileType(bucket=pictures)', 'caption=Фото,export=Csv');
 
         // Адресни данни
-        $this->FLD('country', 'key(mvc=drdata_Countries,select=commonName,selectBg=commonNameBg,allowEmpty)', 'caption=Адресни данни->Държава,remember,class=contactData,mandatory,silent,export=Csv');
+        $this->FLD('country', "key(mvc=drdata_Countries,select=commonName,selectBg=commonNameBg,allowEmpty)",
+                    'caption=Адресни данни->Държава,remember,class=contactData,mandatory,silent,export=Csv');
         $this->FLD('pCode', 'varchar(16)', 'caption=П. код,recently,class=pCode,export=Csv');
         $this->FLD('place', 'varchar(64)', 'caption=Град,class=contactData,hint=Населено място: град или село и община,export=Csv');
         $this->FLD('address', 'varchar(255)', 'caption=Адрес,class=contactData,export=Csv');
@@ -143,10 +144,7 @@ class hr_FormCv extends core_Master
 
         $this->FLD('state', 'enum(draft=Чернова,active=Публикувана,rejected=Оттеглена)', 'caption=Състояние,input=none');
 
-
-
     }
-
 
     /**
      * Преди показване на форма за добавяне/промяна.
@@ -156,57 +154,25 @@ class hr_FormCv extends core_Master
      */
     protected static function on_AfterPrepareEditForm($mvc, &$data)
     {
+      //  $data->form->setDefault('country', 'gyjfyjfgfgjhgfjh');
 
+        $options =  workpreff_WorkPreff::getOptionsForChoice();
 
+        foreach ($options as $v){
 
-        $query = workpreff_WorkPreff::getQUERY();
+            if ($v->type == 'enum'){
 
-        while ($choice = $query->Fetch()) {
-            $aaa =  workpreff_WorkPreff::getOptionsForm($choice->id);
-
-            bp($aaa);
-
-            $choices = array();
-
-            if ($choice->type == 'radio'){
-                $type = 'enum';
-                $options = "Да,Не";
-                $options1 = "maxRadio=2";
-                $choices = explode(';',$choice->choice);
-
-
-
-            }else{
-                $type = 'set';
-                $options1 = "";
-                $choices = explode("\n",$choice->choice);
-
-                foreach ($choices as $v){
-
-                    $caption = 'caption='.$choices->name."$v";
-
-                    $options = "";
-                }
-
-
+                $data->form->FNC("workpreff_$v->id", "enum($v->parts)","caption =$v->name->Избери,maxRadio=$v->count,input");
 
             }
 
+            if ($v->type == 'set'){
 
-foreach ($choices as $v){
+                $data->form->FNC("workpreff_$v->id", "set($v->parts)","caption =$v->name->Маркирай,input");
 
-    $arrCh[] = $v;
-
-
-
-    $data->form->FNC("workpreff_$choice->id_$v", "$type($options)","$options1,caption=$choice->name->$v,input");
-}
-
-
+            }
 
         }
-
-//bp($arrCh);
 
     }
 

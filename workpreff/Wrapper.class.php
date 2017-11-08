@@ -3,18 +3,17 @@
 
 
 /**
- * Клас 'workpreff_WorkPreff'
+ * Клас 'workpreff_Wrapper'
  *
- * Поддържа системното меню и табове-те на пакета 'Core'
+ * Поддържа системното меню и табове-те на пакета 'workpreff'
  *
  *
  * @category  bgerp
  * @package   workpreff
- * @author    Milen Georgiev <milen@download.bg>
- * @copyright 2006 - 2012 Experta OOD
+ * @author    Angel Trifonov angel.trifonoff@gmail.com
+ * @copyright 2006 - 2017 Experta OOD
  * @license   GPL 3
  * @since     v 0.1
- * @link
  */
 class workpreff_Wrapper extends plg_ProtoWrapper
 {
@@ -26,11 +25,11 @@ class workpreff_Wrapper extends plg_ProtoWrapper
     function description()
     {
      
-        
-        $this->TAB('workpreff_WorkPreff', 'Анализ', 'powerUser');
-
-        
-        $this->title = 'Анализи';
+//
+//        $this->TAB('workpreff_WorkPreff', 'Подбор', 'powerUser');
+//
+//
+//        $this->title = 'Подбор';
     
     }
 }
