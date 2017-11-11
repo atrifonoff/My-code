@@ -38,53 +38,48 @@ class workpreff_Setup extends core_ProtoSetup
     /**
      * Описание на модула
      */
-    var $info = "Code analysis";
-    
+    var $info = "";
 
-    /**
-     * Списък с мениджърите, които съдържа пакета
-     */
+
+/**
+* Списък с мениджърите, които съдържа пакета
+*/
     var $managers = array(
-            'workpreff_WorkPreff'
 
-        );
+        'workpreff_WorkPreff',
+        'workpreff_FormCv',
+    );
     
 
     /**
      * Роли за достъп до модула
      */
-    var $roles = 'powerUser';
-    
+//    var $roles = 'ceo,hr';
 
-    /**
-     * Връзки от менюто, сочещи към модула
-     */
-//    var $menuItems = array(
-//            array(3.995, 'Анализ', 'Анализ', 'myself_Codebase', 'default', "powerUser"),
-//        );
-    
-        
-    /**
-     * Инсталиране на пакета
-     */
-    function install()
-    {
-        $html = parent::install();
-              
+    public $depends = 'hr=0.1';
 
-        
-        return $html;
-    }
-    
-    
-    /**
-     * Де-инсталиране на пакета
-     */
-    function deinstall()
-    {
-        // Изтриване на пакета от менюто
-        $res = bgerp_Menu::remove($this);
-        
-        return $res;
-    }
+//
+//    /**
+//     * Инсталиране на пакета
+//     */
+//    function install()
+//    {
+//        $html = parent::install();
+//
+//
+//
+//        return $html;
+//    }
+//
+//
+//    /**
+//     * Де-инсталиране на пакета
+//     */
+//    function deinstall()
+//    {
+//        // Изтриване на пакета от менюто
+//        $res = bgerp_Menu::remove($this);
+//
+//        return $res;
+//    }
 }
