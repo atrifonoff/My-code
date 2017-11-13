@@ -24,6 +24,27 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
     public $canSelectDriver = 'ceo, store, sales, admin, purchase';
 
 
+    /**
+     * Преди показване на форма за добавяне/промяна.
+     *
+     * @param frame2_driver_Proto $Driver $Driver
+     * @param embed_Manager $Embedder
+     * @param stdClass $data
+     */
+    protected static function on_AfterPrepareEditForm(frame2_driver_Proto $Driver, embed_Manager $Embedder, &$data)
+    {
+
+        $form = &$data->form;
+
+        $lastClosedMonth = dt::addMonths(-1,dt::today());
+
+        $lastClosedMonthRec = acc_Periods::fetchByDate($lastClosedMonth);
+
+        $form->setDefault('periodId', $lastClosedMonthRec->id);
+        $form->setDefault('currency', acc_Periods::getBaseCurrencyCode());
+
+    }
+
 
     /**
      * Добавя полетата на драйвера към Fieldset
@@ -34,8 +55,11 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
     {
 
         $fieldset->FLD('periodId', 'key(mvc=acc_Periods,select=title)', 'caption=Период,after=title');
+        $fieldset->FLD('totalVat', 'double(decimals=2)', 'caption=ДДС за периода,input=none');
+        $fieldset->FLD('currency', 'varchar', 'caption=Валута,input=none');
 
     }
+
 
     /**
      * Кои записи ще се показват в таблицата
@@ -44,69 +68,30 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
      * @param stdClass $data
      * @return array
      */
-
-
     protected function prepareRecs($rec, &$data = NULL)
     {
 
-//        $query = sales_SalesDetails::getQuery();
-//
-//        $query->EXT('chargeVat', 'sales_Sales', 'externalKey=saleId,externalName=id');
-//        $query->EXT('makeInvoice', 'sales_Sales', 'externalKey=saleId,externalName=id');
-//        $query->EXT('state', 'sales_Sales', 'externalKey=saleId,externalName=id');
-
-//       $query->where("#state = 'closed'");
-//       $query->where("#makeInvoice = 'no'");
-//        $query->where(array("#chargeVat = '[#1#]' OR #chargeVat = '[#2#]'", 'yes', 'separate'));
-
-
-        $salQuery = sales_Sales::getQuery();
-        $salQuery->where("#state = 'closed'");
-        $salQuery->where("#makeInvoice = 'no'");
-        $salQuery->where(array("#chargeVat = '[#1#]' OR #chargeVat = '[#2#]'", 'yes', 'separate'));
-
-
-        while ($clSales = $salQuery->fetch()){
-
-            $closedSales[$clSales->id] = $clSales;
-
-        }
-
-        foreach ($closedSales as $v){
-
-            $closedSalesId[$v->id] =$v->id;
-        }
-
-        $detQuery = sales_SalesDetails::getQuery();
-       // $detQuery->whereArr("#saleId", $closedSalesId, TRUE);
-
-        while ($detSale = $detQuery->fetch()){
-
-                    $allDetSales[] = $detSale;
-
-        }
-
-        foreach ($closedSalesId as $v){
-
-            foreach ($allDetSales as $dv){
-
-                if($dv->saleId == $v){
-                    
-                    $articuls[] = $dv;
-                    
-                }
-
-            }
-
-        }
-
-
         $recs = array();
-        foreach ($articuls as $articul){
 
+        $query = sales_SalesDetails::getQuery();
+
+        $query->EXT('closedOn', 'sales_Sales', 'externalKey=saleId');
+        $query->EXT('chargeVat', 'sales_Sales', 'externalKey=saleId');
+        $query->EXT('makeInvoice', 'sales_Sales', 'externalKey=saleId');
+        $query->EXT('state', 'sales_Sales', 'externalKey=saleId');
+
+        $query->where(array("#closedOn >= '[#1#]' AND #closedOn <= '[#2#]'", acc_Periods::fetch($rec->periodId)->start, acc_Periods::fetch($rec->periodId)->end . ' 23:59:59'));
+        $query->where("#state = 'closed'");
+        $query->where("#makeInvoice = 'no'");
+        $query->where(array("#chargeVat = '[#1#]' OR #chargeVat = '[#2#]'", 'yes', 'separate'));
+
+        $totalVat = 0;
+
+        while ($articul = $query->fetch()){
 
             $id = $articul->productId;
-          // bp($id,cat_Products::fetchField($id, 'name'),$articul);
+
+            $totalVat += $articul->amount;
 
             if (!array_key_exists($id, $recs)) {
 
@@ -114,22 +99,12 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
 
                     (object)array(
 
-                        'productId' =>$articul->productId,
+                        'productId' => $articul->productId,
                         'measure' => cat_Products::fetchField($id, 'measureId'),
-                        'quantity' =>$articul-> quantity,
-                        'amount' =>$articul-> amount,
-                        'vat' =>$articul-> amount * 0.2,
-                        'price' =>$articul-> price,
-
-
-//                        'productId' => $productId,
-//                        'storeId' => $rec->storeId,
-//
-//                        'minQuantity' => (int)$products->minQuantity[$key],
-//                        'maxQuantity' => (int)$products->maxQuantity[$key],
-//                        'conditionQuantity' => 'ok',
-//                        'conditionColor' => 'green',
-//                        'code' => $products->code[$key]
+                        'quantity' => $articul->quantity,
+                        'amount' => $articul->amount,
+                        'vat' => $articul->amount * cat_Products::getVat($articul->id),
+                        'price' => $articul->price,
 
                     );
 
@@ -141,26 +116,18 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
 
                 $obj->amount += $articul->amount;
 
-
-
             }
 
-            $recs[$id]-> vat = (double)($recs[$id]->amount * 0.2);
-            $recs[$id]-> price = (double)($recs[$id]->amount / $recs[$id]->quantity);
+            $recs[$id]->vat = (double)($recs[$id]->amount * cat_Products::getVat($articul->id));
+
+            $recs[$id]->price = (double)($recs[$id]->amount / $recs[$id]->quantity);
 
         }
 
-      //  bp($recs);
+        $rec->totalVat = $totalVat;
+
         return $recs;
-
     }
-
-//    public static function filterQuery(core_Query &$query, $from, $to, $accs = NULL, $itemsAll = NULL, $items1 = NULL, $items2 = NULL, $items3 = NULL, $strict = FALSE)
-//    {
-//
-//    }
-
-
 
 
     /**
@@ -195,7 +162,6 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
 
         return $fld;
 
-
     }
 
 
@@ -208,7 +174,6 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
      */
     protected function detailRecToVerbal($rec, &$dRec)
     {
-      //  bp($dRec);
 
         $isPlain = Mode::is('text', 'plain');
         $Int = cls::get('type_Int');
@@ -223,11 +188,6 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
         if(isset($dRec->quantity)) {
             $row->quantity =  core_Type::getByName('double(decimals=2)')->toVerbal($dRec->quantity);
         }
-
-//        if(isset($dRec->storeId)) {
-//            $row->storeId = store_Stores::getShortHyperlink($dRec->storeId);
-//        }else{$row->storeId ='Общо';}
-
         if(isset($dRec->measure)) {
             $row->measure = cat_UoM::fetchField($dRec->measure,'shortName');
         }
@@ -247,4 +207,27 @@ class sales_reports_VatOnSalesWidthoutInvoices extends frame2_driver_TableData
         return $row;
 
     }
+
+
+    /**
+     * След вербализирането на данните
+     *
+     * @param frame2_driver_Proto $Driver
+     * @param embed_Manager $Embedder
+     * @param stdClass $row
+     * @param stdClass $rec
+     * @param array $fields
+     */
+    protected static function on_AfterRecToVerbal(frame2_driver_Proto $Driver, embed_Manager $Embedder, $row, $rec, $fields = array())
+    {
+
+        if(isset($rec->periodId)){
+
+            $row->periodId = acc_Periods::getLinkForObject($rec->periodId);
+
+        }
+
+    }
+
+
 }

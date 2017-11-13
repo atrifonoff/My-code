@@ -219,9 +219,6 @@ class store_reports_ProductAvailableQuantity extends frame2_driver_TableData
                     $grDetails['maxQuantity'][] = $grProduct->maxQuantity;
 
                 }
-                bp(count($grDetails['code']));
-
-
 
                 //Премахва артикули ако вече са добавени
                 if (is_array($grDetails['code'])) {
